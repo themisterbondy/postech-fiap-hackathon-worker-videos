@@ -1,13 +1,11 @@
-namespace Postech.Fiap.Hackathon.VideoProcessing.Worker;
+using Postech.Fiap.Hackathon.VideoProcessing.Worker;
+using Postech.Fiap.Hackathon.VideoProcessing.Worker.Settings;
 
-public class Program
-{
-    public static void Main(string[] args)
-    {
-        var builder = WebApplication.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder(args);
+var configuration = AppSettings.Configuration();
 
-        var app = builder.Build();
+builder.Services.AddWorker(configuration);
 
-        app.Run();
-    }
-}
+var app = builder.Build();
+
+app.Run();
