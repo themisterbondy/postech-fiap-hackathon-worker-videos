@@ -1,6 +1,17 @@
 using System.Reflection;
+using Microsoft.Azure.Storage;
+using Microsoft.Azure.Storage.Blob;
+using Microsoft.Azure.Storage.Queue;
 using Microsoft.EntityFrameworkCore;
+using Postech.Fiap.Hackathon.VideoProcessing.Worker.Features.Videos.Interfaces;
+using Postech.Fiap.Hackathon.VideoProcessing.Worker.Features.Videos.Services;
+using Postech.Fiap.Hackathon.VideoProcessing.Worker.Features.Videos.Worker;
 using Postech.Fiap.Hackathon.VideoProcessing.Worker.Persistence;
+using Quartz;
+using Serilog;
+using Serilog.Events;
+using Serilog.Exceptions;
+using Serilog.Filters;
 
 namespace Postech.Fiap.Hackathon.VideoProcessing.Worker;
 
@@ -18,6 +29,75 @@ public static class DependencyInjection
                 options => { options.EnableRetryOnFailure(2, TimeSpan.FromSeconds(3), new List<int>()); });
         });
 
+        services.AddSingleton<CloudBlobContainer>(sp =>
+        {
+            var connectionString = configuration["Azure:ConnectionString"];
+            var containerName = configuration["Azure:Blob:Container"];
+
+            var account = CloudStorageAccount.Parse(connectionString);
+            var blobClient = account.CreateCloudBlobClient();
+
+            var container = blobClient.GetContainerReference(containerName);
+            container.CreateIfNotExists();
+
+            return container;
+        });
+
+        services.AddSingleton<CloudQueue>(_ =>
+        {
+            var connectionString = configuration["Azure:ConnectionString"];
+            var queueName = configuration["Azure:Queue:Name"];
+
+            var account = CloudStorageAccount.Parse(connectionString);
+            var client = account.CreateCloudQueueClient();
+
+            var queue = client.GetQueueReference(queueName);
+            queue.CreateIfNotExists();
+
+            return queue;
+        });
+
+        services.AddQuartz(q =>
+        {
+            q.UseMicrosoftDependencyInjectionJobFactory();
+
+            var jobKey = new JobKey("VideoQueueJob");
+
+            q.AddJob<VideoQueueJob>(opts => opts.WithIdentity(jobKey));
+
+            q.AddTrigger(opts => opts
+                .ForJob(jobKey)
+                .WithIdentity("VideoQueueTrigger")
+                .WithSimpleSchedule(x => x.WithIntervalInSeconds(5).RepeatForever()));
+        });
+
+        services.AddQuartzHostedService();
+
+        services.AddSingleton<IMessageProcessor, VideoMessageProcessor>();
+
+
         return services;
+    }
+
+    public static void AddSerilogConfiguration(this IServiceCollection services,
+        WebApplicationBuilder builder, IConfiguration configuration)
+    {
+        var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+        var applicationName =
+            $"{Assembly.GetName().Name?.ToLower().Replace(".", "-")}-{environment?.ToLower().Replace(".", "-")}";
+
+        Log.Logger = new LoggerConfiguration()
+            .ReadFrom.Configuration(configuration)
+            .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+            .MinimumLevel.Override("System", LogEventLevel.Information)
+            .Enrich.FromLogContext()
+            .Enrich.WithProperty("ApplicationName", applicationName)
+            .Enrich.WithCorrelationId()
+            .Enrich.WithExceptionDetails()
+            .Filter.ByExcluding(Matching.FromSource("Microsoft.AspNetCore.StaticFiles"))
+            .CreateLogger();
+
+        builder.Logging.ClearProviders();
+        builder.Host.UseSerilog(Log.Logger, true);
     }
 }
