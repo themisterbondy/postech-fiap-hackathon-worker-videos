@@ -1,0 +1,57 @@
+﻿name: fiap-video-processing
+services:
+  fiap-video-processing-worker:
+    container_name: fiap-video-processing-worker
+    build:
+      context: .
+      dockerfile: src/Postech.Fiap.Hackathon.VideoProcessing.Worker/Dockerfile
+    environment:
+      - 'ASPNETCORE_ENVIRONMENT=Development'
+      - 'ASPNETCORE_URLS=https://+;http://+'
+      - 'ASPNETCORE_Kestrel__Certificates__Default__Password=password123'
+      - 'ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx'
+      - 'DOTNET_USE_POLLING_FILE_WATCHER=true'
+      - 'Serilog:WriteTo:1:Args:serverUrl=http://fiap-video-processing-seq:5341'
+      - 'OTEL_EXPORTER_OTLP_ENDPOINT=http://fiap-video-processing-seq:5341/ingest/otlp/v1/traces'
+      - 'OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf'
+      - 'ConnectionStrings:DefaultConnection=Server=sqlserver,1433;Initial Catalog=video-processing-sql-server-dev;User ID=sa;Password=blueScreen666;TrustServerCertificate=True;MultiSubnetFailover=True'
+      - 'AzureStorageSettings:ConnectionString=UseDevelopmentStorage=true;DevelopmentStorageProxyUri=http://host.docker.internal'
+    ports:
+      - "5165:80"
+      - "7005:443"
+    volumes:
+      - '$USERPROFILE\.aspnet\https:/https/'
+    networks:
+      - fiap-video-processing
+    depends_on:
+      - sqlserver
+      - azurite
+
+  sqlserver:
+    container_name: fiap-video-processing-sql-server
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=blueScreen666
+    ports:
+      - "1433:1433"
+    volumes:
+      - c:/sql-server:/var/opt/mssql/data
+    networks:
+      - fiap-video-processing
+
+  azurite:
+    container_name: fiap-video-processing-storage-account
+    image: mcr.microsoft.com/azure-storage/azurite
+    ports:
+      - "10000:10000"
+      - "10001:10001"
+      - "10002:10002"
+    volumes:
+      - c:/azurite:/data
+    networks:
+      - fiap-video-processing
+
+networks:
+  fiap-video-processing:
+    driver: bridge
