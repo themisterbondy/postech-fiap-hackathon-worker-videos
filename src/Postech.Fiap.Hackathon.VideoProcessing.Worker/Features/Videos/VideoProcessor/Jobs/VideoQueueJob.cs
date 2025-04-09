@@ -1,12 +1,12 @@
 using Microsoft.Azure.Storage.Queue;
-using Postech.Fiap.Hackathon.VideoProcessing.Worker.Features.Videos.Interfaces;
+using Postech.Fiap.Hackathon.VideoProcessing.Worker.Features.Videos.VideoProcessor.Interfaces;
 using Quartz;
 
-namespace Postech.Fiap.Hackathon.VideoProcessing.Worker.Features.Videos.Worker;
+namespace Postech.Fiap.Hackathon.VideoProcessing.Worker.Features.Videos.VideoProcessor.Jobs;
 
 public class VideoQueueJob(
     CloudQueue queue,
-    IMessageProcessor processor,
+    IMessageReceiver receiver,
     ILogger<VideoQueueJob> logger)
     : IJob
 {
@@ -20,7 +20,7 @@ public class VideoQueueJob(
             {
                 logger.LogInformation("Mensagem lida da fila.");
 
-                await processor.ProcessVideoAsync(message);
+                await receiver.ReceiverAsync(message);
                 await queue.DeleteMessageAsync(message);
 
                 logger.LogInformation("Mensagem processada e removida da fila.");
