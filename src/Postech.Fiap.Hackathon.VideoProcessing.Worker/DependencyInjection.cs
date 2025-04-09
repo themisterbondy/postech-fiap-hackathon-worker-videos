@@ -1,11 +1,13 @@
 using System.Reflection;
+using MediatR;
 using Microsoft.Azure.Storage;
 using Microsoft.Azure.Storage.Blob;
 using Microsoft.Azure.Storage.Queue;
 using Microsoft.EntityFrameworkCore;
-using Postech.Fiap.Hackathon.VideoProcessing.Worker.Features.Videos.Interfaces;
-using Postech.Fiap.Hackathon.VideoProcessing.Worker.Features.Videos.Services;
-using Postech.Fiap.Hackathon.VideoProcessing.Worker.Features.Videos.Worker;
+using Postech.Fiap.Hackathon.VideoProcessing.Worker.Common.Behavior;
+using Postech.Fiap.Hackathon.VideoProcessing.Worker.Features.Videos.VideoProcessor.Interfaces;
+using Postech.Fiap.Hackathon.VideoProcessing.Worker.Features.Videos.VideoProcessor.Jobs;
+using Postech.Fiap.Hackathon.VideoProcessing.Worker.Features.Videos.VideoProcessor.Services;
 using Postech.Fiap.Hackathon.VideoProcessing.Worker.Persistence;
 using Quartz;
 using Serilog;
@@ -21,6 +23,7 @@ public static class DependencyInjection
 
     public static IServiceCollection AddWorker(this IServiceCollection services, IConfiguration configuration)
     {
+        services.AddMediatRConfiguration();
         var sqlServerConnectionString = configuration.GetConnectionString("DefaultConnection");
 
         services.AddDbContext<ApplicationDbContext>(options =>
@@ -68,15 +71,24 @@ public static class DependencyInjection
             q.AddTrigger(opts => opts
                 .ForJob(jobKey)
                 .WithIdentity("VideoQueueTrigger")
-                .WithSimpleSchedule(x => x.WithIntervalInSeconds(5).RepeatForever()));
+                .WithSimpleSchedule(x => x.WithIntervalInSeconds(30).RepeatForever()));
         });
 
         services.AddQuartzHostedService();
 
-        services.AddSingleton<IMessageProcessor, VideoMessageProcessor>();
+        services.AddScoped<IMessageReceiver, VideoMessageReceiver>();
+        services.AddScoped<IVideoDownloader, VideoDownloader>();
+
+
 
 
         return services;
+    }
+
+    private static void AddMediatRConfiguration(this IServiceCollection services)
+    {
+        services.AddMediatR(config => config.RegisterServicesFromAssembly(Assembly));
+        services.AddScoped(typeof(IPipelineBehavior<,>), typeof(LoggingPipelineBehavior<,>));
     }
 
     public static void AddSerilogConfiguration(this IServiceCollection services,
