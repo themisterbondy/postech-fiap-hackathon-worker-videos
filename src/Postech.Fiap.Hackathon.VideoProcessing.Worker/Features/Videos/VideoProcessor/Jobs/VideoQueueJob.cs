@@ -27,18 +27,22 @@ public class VideoQueueJob(
                     if (message.DequeueCount >= 5)
                     {
                         await queue.DeleteMessageAsync(message);
-                        logger.LogError("Mensagem falhou após 5 tentativas. Removendo da fila. ID: {MessageId}", message.Id);
+                        logger.LogError(
+                            "Mensagem falhou após 5 tentativas. Removendo da fila. ID: {MessageId}, Conteúdo: {Message}",
+                            message.Id, message.AsString);
                         return;
                     }
 
-                    logger.LogWarning("Mensagem falhou. Tentativa {AttemptCount} de 5. ID: {MessageId}", message.DequeueCount, message.Id);
+                    logger.LogWarning(
+                        "Mensagem falhou. Tentativa {AttemptCount} de 5. ID: {MessageId}, Conteúdo: {Message}",
+                        message.DequeueCount, message.Id, message.AsString);
                     return;
                 }
 
                 await queue.DeleteMessageAsync(message);
 
-                logger.LogInformation("Mensagem processada e removida da fila com sucesso. ID: {MessageId}",
-                    message.Id);
+                logger.LogInformation("Mensagem processada e removida da fila com sucesso. ID: {MessageId}, Conteúdo: {Message}",
+                    message.Id, message.AsString);
             }
         }
         catch (Exception ex)
