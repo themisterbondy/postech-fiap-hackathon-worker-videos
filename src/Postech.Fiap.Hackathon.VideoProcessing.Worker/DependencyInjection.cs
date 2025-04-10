@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Postech.Fiap.Hackathon.VideoProcessing.Worker.Common.Behavior;
 using Postech.Fiap.Hackathon.VideoProcessing.Worker.Features.Videos.VideoProcessor.Interfaces;
 using Postech.Fiap.Hackathon.VideoProcessing.Worker.Features.Videos.VideoProcessor.Jobs;
+using Postech.Fiap.Hackathon.VideoProcessing.Worker.Features.Videos.VideoProcessor.Repositores;
 using Postech.Fiap.Hackathon.VideoProcessing.Worker.Features.Videos.VideoProcessor.Services;
 using Postech.Fiap.Hackathon.VideoProcessing.Worker.Persistence;
 using Quartz;
@@ -29,7 +30,7 @@ public static class DependencyInjection
         services.AddDbContext<ApplicationDbContext>(options =>
         {
             options.UseSqlServer(sqlServerConnectionString,
-                options => { options.EnableRetryOnFailure(2, TimeSpan.FromSeconds(3), new List<int>()); });
+                options => { options.EnableRetryOnFailure(2, TimeSpan.FromSeconds(20), new List<int>()); });
         });
 
         services.AddSingleton<CloudBlobContainer>(sp =>
@@ -77,7 +78,9 @@ public static class DependencyInjection
         services.AddQuartzHostedService();
 
         services.AddScoped<IMessageReceiver, VideoMessageReceiver>();
-        services.AddScoped<IVideoDownloader, VideoDownloader>();
+        services.AddScoped<IStorageService, StorageService>();
+        services.AddScoped<IVideoRepository, VideoRepository>();
+        services.AddScoped<IVideoFrameExtractor, VideoFrameExtractor>();
 
 
 
