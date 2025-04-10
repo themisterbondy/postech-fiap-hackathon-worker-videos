@@ -14,21 +14,36 @@ public class VideoQueueJob(
     {
         try
         {
-            var message = await queue.GetMessageAsync();
+            var message = await queue.GetMessageAsync(context.CancellationToken);
 
             if (message != null)
             {
-                logger.LogInformation("Mensagem lida da fila.");
+                logger.LogInformation("Mensagem lida da fila. ID: {MessageId}, Conteúdo: {Message}", message.Id,
+                    message.AsString);
 
-                await receiver.ReceiverAsync(message);
+                var messageResult = await receiver.ReceiverAsync(message);
+                if (messageResult.IsFailure)
+                {
+                    if (message.DequeueCount >= 5)
+                    {
+                        await queue.DeleteMessageAsync(message);
+                        logger.LogError("Mensagem falhou após 5 tentativas. Removendo da fila. ID: {MessageId}", message.Id);
+                        return;
+                    }
+
+                    logger.LogWarning("Mensagem falhou. Tentativa {AttemptCount} de 5. ID: {MessageId}", message.DequeueCount, message.Id);
+                    return;
+                }
+
                 await queue.DeleteMessageAsync(message);
 
-                logger.LogInformation("Mensagem processada e removida da fila.");
+                logger.LogInformation("Mensagem processada e removida da fila com sucesso. ID: {MessageId}",
+                    message.Id);
             }
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Erro ao processar mensagem no VideoQueueJob.");
+            logger.LogError(ex, "Erro ao processar mensagem da fila: {ExMessage}", ex.Message);
         }
     }
 }
