@@ -31,6 +31,7 @@ public static class DependencyInjection
         {
             options.UseSqlServer(sqlServerConnectionString,
                 options => { options.EnableRetryOnFailure(2, TimeSpan.FromSeconds(20), new List<int>()); });
+            options.EnableSensitiveDataLogging(false);
         });
 
         services.AddSingleton<CloudBlobContainer>(sp =>
@@ -105,6 +106,7 @@ public static class DependencyInjection
             .ReadFrom.Configuration(configuration)
             .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
             .MinimumLevel.Override("System", LogEventLevel.Information)
+            .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", LogEventLevel.Warning)
             .Enrich.FromLogContext()
             .Enrich.WithProperty("ApplicationName", applicationName)
             .Enrich.WithCorrelationId()
