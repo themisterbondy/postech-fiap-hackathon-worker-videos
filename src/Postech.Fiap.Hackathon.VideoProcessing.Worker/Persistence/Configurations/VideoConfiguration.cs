@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Postech.Fiap.Hackathon.VideoProcessing.Worker.Features.Videos.Models;
 
-namespace Postech.Fiap.Hackathon.VideoProcessing.WebApi.Persistence.Configurations;
+namespace Postech.Fiap.Hackathon.VideoProcessing.Worker.Persistence.Configurations;
 
 public class VideoConfiguration : IEntityTypeConfiguration<Video>
 {
