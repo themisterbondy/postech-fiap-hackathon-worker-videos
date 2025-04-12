@@ -43,7 +43,8 @@ public class StorageService(CloudBlobContainer container) : IStorageService
         }
     }
 
-    public async Task<Result<string>> UploadAsync(Guid videoId, string filePath, string contentType, CancellationToken cancellationToken)
+    public async Task<Result<string>> UploadAsync(Guid videoId, string filePath, string contentType,
+        CancellationToken cancellationToken)
     {
         const string errorCode = "StorageService.UploadAsync";
 

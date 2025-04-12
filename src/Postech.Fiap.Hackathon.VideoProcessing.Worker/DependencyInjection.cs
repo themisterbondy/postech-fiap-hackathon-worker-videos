@@ -1,5 +1,4 @@
 using System.Reflection;
-using MediatR;
 using Microsoft.Azure.Storage;
 using Microsoft.Azure.Storage.Blob;
 using Microsoft.Azure.Storage.Queue;
@@ -19,6 +18,7 @@ using Serilog.Filters;
 
 namespace Postech.Fiap.Hackathon.VideoProcessing.Worker;
 
+[ExcludeFromCodeCoverage]
 public static class DependencyInjection
 {
     private static readonly Assembly Assembly = typeof(Program).Assembly;

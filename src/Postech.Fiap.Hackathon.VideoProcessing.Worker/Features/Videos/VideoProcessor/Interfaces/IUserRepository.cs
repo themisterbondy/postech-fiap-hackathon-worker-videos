@@ -2,5 +2,5 @@ namespace Postech.Fiap.Hackathon.VideoProcessing.Worker.Features.Videos.VideoPro
 
 public interface IUserRepository
 {
-    public  Task<string> GetUserEmailByVideoId(string videoId);
+    public Task<string> GetUserEmailByVideoId(string videoId);
 }

@@ -34,7 +34,8 @@ public class VideoProcessorCommandHandler(
                 cancellationToken);
             if (videoDownloadResult.IsFailure)
             {
-                logger.LogError("Erro ao baixar o vídeo com ID: {VideoId}. Motivo: {Error}", video.Id, videoDownloadResult.Error.Message);
+                logger.LogError("Erro ao baixar o vídeo com ID: {VideoId}. Motivo: {Error}", video.Id,
+                    videoDownloadResult.Error.Message);
                 return Result.Failure(videoDownloadResult.Error);
             }
 
@@ -46,7 +47,8 @@ public class VideoProcessorCommandHandler(
                 video.ThumbnailsInterval);
             if (framesResult.IsFailure)
             {
-                logger.LogError("Erro ao extrair frames do vídeo com ID: {VideoId}. Motivo: {Error}", video.Id, framesResult.Error.Message);
+                logger.LogError("Erro ao extrair frames do vídeo com ID: {VideoId}. Motivo: {Error}", video.Id,
+                    framesResult.Error.Message);
                 return Result.Failure(framesResult.Error);
             }
 
@@ -59,7 +61,8 @@ public class VideoProcessorCommandHandler(
                 cancellationToken);
             if (uploadResult.IsFailure)
             {
-                logger.LogError("Erro ao fazer upload dos frames do vídeo com ID: {VideoId}. Motivo: {Error}", video.Id, uploadResult.Error.Message);
+                logger.LogError("Erro ao fazer upload dos frames do vídeo com ID: {VideoId}. Motivo: {Error}", video.Id,
+                    uploadResult.Error.Message);
                 return Result.Failure(uploadResult.Error);
             }
 

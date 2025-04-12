@@ -11,3 +11,6 @@ builder.Services
 var app = builder.Build();
 
 app.Run();
+
+[ExcludeFromCodeCoverage]
+public partial class Program;

@@ -1,7 +1,6 @@
-using System.Security;
-
 namespace Postech.Fiap.Hackathon.VideoProcessing.Worker.Settings;
 
+[ExcludeFromCodeCoverage]
 public class SmtpSettings
 {
     public string? Host { get; set; } = string.Empty;
@@ -11,5 +10,4 @@ public class SmtpSettings
     public string From { get; set; } = string.Empty;
     public string? Username { get; set; }
     public string? Password { get; set; }
-
 }

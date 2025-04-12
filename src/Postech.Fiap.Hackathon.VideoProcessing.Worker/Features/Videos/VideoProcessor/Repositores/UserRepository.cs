@@ -8,10 +8,15 @@ public class UserRepository(ApplicationDbContext context) : IUserRepository
 {
     public async Task<string> GetUserEmailByVideoId(string videoId)
     {
-        var userEmail =await context.Database
-            .SqlQueryRaw<string>("SELECT u.Email AS [Value] FROM Videos v JOIN AspNetUsers u ON v.UserId = u.Id WHERE v.Id = {0}", videoId)
-            .FirstOrDefaultAsync();
+        var guid = Guid.Parse(videoId);
 
-        return userEmail;
+        var video = await context.Videos
+            .Where(v => v.Id == guid)
+            .FirstOrDefaultAsync(v => v.Id == guid); // força avaliação da primeira parte
+
+        var users = await context.Users.FirstOrDefaultAsync(v =>
+            v.Id == video.UserId.ToString()); // força avaliação da segunda parte
+
+        return users.Email;
     }
 }

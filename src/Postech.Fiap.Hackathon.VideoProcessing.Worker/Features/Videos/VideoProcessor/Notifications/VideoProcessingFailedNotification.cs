@@ -4,5 +4,4 @@ public class VideoProcessingFailedNotification(string videoId, string errorMessa
 {
     public string VideoId { get; set; } = videoId;
     public string ErrorMessage { get; set; } = errorMessage;
-    public DateTime OccurredAt { get; set; } = DateTime.UtcNow;
 }

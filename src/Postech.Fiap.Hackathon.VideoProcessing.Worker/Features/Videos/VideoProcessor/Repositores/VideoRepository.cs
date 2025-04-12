@@ -12,7 +12,7 @@ public class VideoRepository(ApplicationDbContext context) : IVideoRepository
         var video = await context.Videos.FirstOrDefaultAsync
         (
             v => v.Id == Guid.Parse(videoId),
-            cancellationToken: cancellationToken
+            cancellationToken
         );
 
         return video;
@@ -27,6 +27,5 @@ public class VideoRepository(ApplicationDbContext context) : IVideoRepository
         video.Status = status;
         context.Videos.Update(video);
         return context.SaveChangesAsync(cancellationToken);
-
     }
 }
