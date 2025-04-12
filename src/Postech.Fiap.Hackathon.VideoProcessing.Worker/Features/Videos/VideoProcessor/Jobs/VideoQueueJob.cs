@@ -1,5 +1,6 @@
 using Microsoft.Azure.Storage.Queue;
 using Postech.Fiap.Hackathon.VideoProcessing.Worker.Features.Videos.VideoProcessor.Interfaces;
+using Postech.Fiap.Hackathon.VideoProcessing.Worker.Features.Videos.VideoProcessor.Notifications;
 using Quartz;
 
 namespace Postech.Fiap.Hackathon.VideoProcessing.Worker.Features.Videos.VideoProcessor.Jobs;
@@ -7,6 +8,7 @@ namespace Postech.Fiap.Hackathon.VideoProcessing.Worker.Features.Videos.VideoPro
 public class VideoQueueJob(
     CloudQueue queue,
     IMessageReceiver receiver,
+    IMediator mediator,
     ILogger<VideoQueueJob> logger)
     : IJob
 {
@@ -30,6 +32,9 @@ public class VideoQueueJob(
                         logger.LogError(
                             "Mensagem falhou após 5 tentativas. Removendo da fila. ID: {MessageId}, Conteúdo: {Message}",
                             message.Id, message.AsString);
+                        await mediator.Publish(new VideoProcessingFailedNotification(
+                            message.AsString,
+                            messageResult.Error.Message));
                         return;
                     }
 
@@ -41,8 +46,11 @@ public class VideoQueueJob(
 
                 await queue.DeleteMessageAsync(message);
 
-                logger.LogInformation("Mensagem processada e removida da fila com sucesso. ID: {MessageId}, Conteúdo: {Message}",
+                logger.LogInformation(
+                    "Mensagem processada e removida da fila com sucesso. ID: {MessageId}, Conteúdo: {Message}",
                     message.Id, message.AsString);
+
+                await mediator.Publish(new DeleteVideoProcessingLocalFolderNotification(message.AsString));
             }
         }
         catch (Exception ex)
