@@ -6,10 +6,12 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
         <RootNamespace>Postech.Fiap.Hackathon.VideoProcessing.Worker</RootNamespace>
+        <UserSecretsId>595ee78c-789b-4a59-bbe2-1421481d5f12</UserSecretsId>
     </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="FFMpegCore" Version="5.2.0" />
+        <PackageReference Include="MailKit" Version="4.11.0" />
         <PackageReference Include="MediatR" Version="12.5.0" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.3"/>
         <PackageReference Include="Microsoft.Azure.Storage.Blob" Version="11.2.3"/>

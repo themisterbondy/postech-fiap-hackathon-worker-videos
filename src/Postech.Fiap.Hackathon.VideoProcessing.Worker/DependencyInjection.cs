@@ -10,6 +10,7 @@ using Postech.Fiap.Hackathon.VideoProcessing.Worker.Features.Videos.VideoProcess
 using Postech.Fiap.Hackathon.VideoProcessing.Worker.Features.Videos.VideoProcessor.Repositores;
 using Postech.Fiap.Hackathon.VideoProcessing.Worker.Features.Videos.VideoProcessor.Services;
 using Postech.Fiap.Hackathon.VideoProcessing.Worker.Persistence;
+using Postech.Fiap.Hackathon.VideoProcessing.Worker.Settings;
 using Quartz;
 using Serilog;
 using Serilog.Events;
@@ -82,8 +83,9 @@ public static class DependencyInjection
         services.AddScoped<IStorageService, StorageService>();
         services.AddScoped<IVideoRepository, VideoRepository>();
         services.AddScoped<IVideoFrameExtractor, VideoFrameExtractor>();
+        services.AddScoped<IUserRepository, UserRepository>();
 
-
+        services.Configure<SmtpSettings>(configuration.GetSection("SmtpSettings"));
 
 
         return services;
