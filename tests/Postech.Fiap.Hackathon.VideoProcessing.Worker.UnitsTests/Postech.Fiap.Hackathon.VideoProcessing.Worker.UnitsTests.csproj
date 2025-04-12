@@ -15,7 +15,9 @@
 
     <ItemGroup>
 
-        <PackageReference Include="FluentAssertions" Version="8.2.0" />
+        <PackageReference Include="FFMpegCore" Version="5.2.0"/>
+
+        <PackageReference Include="FluentAssertions" Version="7.2.0"/>
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0"/>
         <PackageReference Include="NSubstitute" Version="5.3.0" />
         <PackageReference Include="xunit" Version="2.5.3"/>
@@ -31,7 +33,13 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Using Include="Xunit"/>
+        <None Update="TestAssets\test_video.mp4">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\Postech.Fiap.Hackathon.VideoProcessing.Worker\Postech.Fiap.Hackathon.VideoProcessing.Worker.csproj"/>
     </ItemGroup>
 
 </Project>
