@@ -11,6 +11,7 @@ using Postech.Fiap.Hackathon.VideoProcessing.Worker.Features.Videos.VideoProcess
 using Postech.Fiap.Hackathon.VideoProcessing.Worker.Infrastructure.Email;
 using Postech.Fiap.Hackathon.VideoProcessing.Worker.Persistence;
 using Postech.Fiap.Hackathon.VideoProcessing.Worker.Settings;
+using Postech.Fiap.Orders.WebApi.Common;
 using Quartz;
 using Serilog;
 using Serilog.Events;
@@ -27,7 +28,7 @@ public static class DependencyInjection
     public static IServiceCollection AddWorker(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddMediatRConfiguration();
-        var sqlServerConnectionString = configuration.GetConnectionString("DefaultConnection");
+        var sqlServerConnectionString = configuration["ConnectionStrings:DefaultConnection"];
 
         services.AddDbContextFactory<ApplicationDbContext>(options =>
         {
@@ -78,6 +79,7 @@ public static class DependencyInjection
                 .WithSimpleSchedule(x => x.WithIntervalInSeconds(30).RepeatForever()));
         });
 
+        services.AddUseHealthChecksConfiguration(configuration);
         services.AddQuartzHostedService();
 
         services.AddScoped<IMessageReceiver, VideoMessageReceiver>();
