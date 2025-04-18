@@ -7,7 +7,7 @@ using Postech.Fiap.Hackathon.VideoProcessing.Worker.Features.Videos.VideoProcess
 using Postech.Fiap.Hackathon.VideoProcessing.Worker.Features.Videos.VideoProcessor.Notifications;
 using Quartz;
 
-namespace Postech.Fiap.Hackathon.VideoProcessing.Tests.Features.Videos.VideoProcessor.Jobs;
+namespace Postech.Fiap.Hackathon.VideoProcessing.Worker.UnitsTests.Features.Videos.Jobs;
 
 public class VideoQueueJobTests
 {

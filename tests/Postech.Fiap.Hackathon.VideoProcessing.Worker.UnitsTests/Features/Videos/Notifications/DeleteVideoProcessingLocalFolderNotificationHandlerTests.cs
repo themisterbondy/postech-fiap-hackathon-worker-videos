@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Postech.Fiap.Hackathon.VideoProcessing.Worker.Features.Videos.VideoProcessor.Notifications;
 
-namespace Postech.Fiap.Hackathon.VideoProcessing.Tests.Features.Videos.VideoProcessor.Notifications;
+namespace Postech.Fiap.Hackathon.VideoProcessing.Worker.UnitsTests.Features.Videos.Notifications;
 
 public class DeleteVideoProcessingLocalFolderNotificationHandlerTests
 {

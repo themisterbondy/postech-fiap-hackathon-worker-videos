@@ -1,10 +1,12 @@
+using MediatR;
 using Microsoft.Extensions.Logging;
 using Postech.Fiap.Hackathon.VideoProcessing.Worker.Common.ResultPattern;
 using Postech.Fiap.Hackathon.VideoProcessing.Worker.Features.Videos.Models;
 using Postech.Fiap.Hackathon.VideoProcessing.Worker.Features.Videos.VideoProcessor.Commands;
 using Postech.Fiap.Hackathon.VideoProcessing.Worker.Features.Videos.VideoProcessor.Interfaces;
+using Postech.Fiap.Hackathon.VideoProcessing.Worker.Features.Videos.VideoProcessor.Notifications;
 
-namespace Postech.Fiap.Hackathon.VideoProcessing.Tests.Features.Videos.VideoProcessor.Commands;
+namespace Postech.Fiap.Hackathon.VideoProcessing.Worker.UnitsTests.Features.Videos.Commands;
 
 public class VideoProcessorCommandHandlerTests
 {
@@ -13,6 +15,8 @@ public class VideoProcessorCommandHandlerTests
 
     private readonly ILogger<VideoProcessorCommandHandler> _logger =
         Substitute.For<ILogger<VideoProcessorCommandHandler>>();
+
+    private readonly IMediator _mediator = Substitute.For<IMediator>();
 
     private readonly IStorageService _storageService = Substitute.For<IStorageService>();
     private readonly IVideoRepository _videoRepo = Substitute.For<IVideoRepository>();
@@ -23,6 +27,7 @@ public class VideoProcessorCommandHandlerTests
             _videoRepo,
             _storageService,
             _frameExtractor,
+            _mediator,
             _logger);
     }
 
@@ -197,6 +202,31 @@ public class VideoProcessorCommandHandlerTests
         result.IsFailure.Should().BeTrue();
         result.Error.Message.Should().Contain("erro inesperado");
 
-        await _videoRepo.Received().ChangeStatusAsync(video.Id.ToString(), VideoStatus.Failed, _ct);
+        await _videoRepo.Received().ChangeStatusAsync(video.Id.ToString(), VideoStatus.Uploaded, _ct);
+    }
+
+    [Fact]
+    public async Task Should_HandleUnexpectedException_AndResetStatusToUploaded_AndNotifyMediator()
+    {
+        // Arrange
+        var video = new Video { Id = Guid.NewGuid(), Status = VideoStatus.Uploaded };
+
+        _videoRepo.GetVideoByIDAsync(video.Id.ToString(), _ct).Returns(video);
+        _storageService.DownloadAsync(Arg.Any<Guid>(), Arg.Any<string>(), _ct)
+            .Returns<Task<Result<string>>>(_ => throw new Exception("erro inesperado"));
+
+        var sut = CreateSut();
+        var command = new VideoProcessorCommand(video.Id.ToString());
+
+        // Act
+        var result = await sut.Handle(command, _ct);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Message.Should().Contain("erro inesperado");
+
+        await _videoRepo.Received().ChangeStatusAsync(video.Id.ToString(), VideoStatus.Uploaded, _ct);
+        await _mediator.Received()
+            .Publish(Arg.Is<DeleteVideoProcessingLocalFolderNotification>(n => n.VideoId == video.Id.ToString()), _ct);
     }
 }
