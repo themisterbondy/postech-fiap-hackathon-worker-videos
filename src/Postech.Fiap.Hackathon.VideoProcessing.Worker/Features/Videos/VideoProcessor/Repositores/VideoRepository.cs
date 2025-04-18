@@ -5,10 +5,11 @@ using Postech.Fiap.Hackathon.VideoProcessing.Worker.Persistence;
 
 namespace Postech.Fiap.Hackathon.VideoProcessing.Worker.Features.Videos.VideoProcessor.Repositores;
 
-public class VideoRepository(ApplicationDbContext context) : IVideoRepository
+public class VideoRepository(IDbContextFactory<ApplicationDbContext> contextFactory) : IVideoRepository
 {
     public async Task<Video?> GetVideoByIDAsync(string videoId, CancellationToken cancellationToken)
     {
+        await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
         var video = await context.Videos.FirstOrDefaultAsync
         (
             v => v.Id == Guid.Parse(videoId),
@@ -18,14 +19,29 @@ public class VideoRepository(ApplicationDbContext context) : IVideoRepository
         return video;
     }
 
-    public Task ChangeStatusAsync(string videoId, VideoStatus status, CancellationToken cancellationToken)
+    public async Task ChangeStatusAsync(string videoId, VideoStatus status, CancellationToken cancellationToken)
     {
-        var video = context.Videos.FirstOrDefault(v => v.Id == Guid.Parse(videoId));
+        await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
+        var video = await context.Videos.FirstOrDefaultAsync(v => v.Id == Guid.Parse(videoId),
+            cancellationToken);
 
-        if (video == null) return Task.CompletedTask;
+        if (video == null) return;
 
         video.Status = status;
         context.Videos.Update(video);
-        return context.SaveChangesAsync(cancellationToken);
+        await context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task UpdateZipPathAsync(string videoId, string zipPath, CancellationToken cancellationToken)
+    {
+        await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
+        var video = await context.Videos.FirstOrDefaultAsync(v => v.Id == Guid.Parse(videoId),
+            cancellationToken);
+
+        if (video == null) return;
+
+        video.ThumbnailsZipPath = zipPath;
+        context.Videos.Update(video);
+        await context.SaveChangesAsync(cancellationToken);
     }
 }

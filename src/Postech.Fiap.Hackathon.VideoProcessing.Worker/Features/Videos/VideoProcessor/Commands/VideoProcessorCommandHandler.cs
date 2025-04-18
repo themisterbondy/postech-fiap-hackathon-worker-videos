@@ -1,6 +1,7 @@
 using Postech.Fiap.Hackathon.VideoProcessing.Worker.Common.ResultPattern;
 using Postech.Fiap.Hackathon.VideoProcessing.Worker.Features.Videos.Models;
 using Postech.Fiap.Hackathon.VideoProcessing.Worker.Features.Videos.VideoProcessor.Interfaces;
+using Postech.Fiap.Hackathon.VideoProcessing.Worker.Features.Videos.VideoProcessor.Notifications;
 
 namespace Postech.Fiap.Hackathon.VideoProcessing.Worker.Features.Videos.VideoProcessor.Commands;
 
@@ -8,6 +9,7 @@ public class VideoProcessorCommandHandler(
     IVideoRepository videoRepository,
     IStorageService storageService,
     IVideoFrameExtractor videoFrameExtractor,
+    IMediator mediator,
     ILogger<VideoProcessorCommandHandler> logger)
     : IRequestHandler<VideoProcessorCommand, Result>
 {
@@ -25,9 +27,11 @@ public class VideoProcessorCommandHandler(
                 return Result.Failure(Error.Failure("VideoProcessorCommandHandler.Handle",
                     $"O vídeo com o ID {video.Id} não está em um estado válido para processamento."));
 
+            logger.LogInformation("Alterando o status do vídeo para 'Processando'. ID: {VideoId}", video.Id);
             await videoRepository.ChangeStatusAsync(video.Id.ToString(), VideoStatus.Processing, cancellationToken);
             logger.LogInformation("Status do vídeo alterado para 'Processando'. ID: {VideoId}", video.Id);
 
+            logger.LogInformation("Iniciando o download do vídeo. ID: {VideoId}", video.Id);
             var videoDownloadResult = await storageService.DownloadAsync(
                 video.Id,
                 video.FilePath,
@@ -41,6 +45,7 @@ public class VideoProcessorCommandHandler(
 
             logger.LogInformation("Vídeo baixado com sucesso. ID: {VideoId}", video.Id);
 
+            logger.LogInformation("Iniciando a extração de frames do vídeo. ID: {VideoId}", video.Id);
             var framesResult = await videoFrameExtractor.ExtractFramesAsync(
                 video.Id,
                 videoDownloadResult.Value,
@@ -54,6 +59,7 @@ public class VideoProcessorCommandHandler(
 
             logger.LogInformation("Frames do vídeo extraídos com sucesso. ID: {VideoId}", video.Id);
 
+            logger.LogInformation("Iniciando o upload dos frames extraídos. ID: {VideoId}", video.Id);
             var uploadResult = await storageService.UploadAsync(
                 video.Id,
                 framesResult.Value,
@@ -68,6 +74,11 @@ public class VideoProcessorCommandHandler(
 
             logger.LogInformation("Upload dos frames realizado com sucesso. ID: {VideoId}", video.Id);
 
+            logger.LogInformation("Atualizando o caminho do zip no banco de dados. ID: {VideoId}", video.Id);
+            await videoRepository.UpdateZipPathAsync(video.Id.ToString(), uploadResult.Value, cancellationToken);
+            logger.LogInformation("Caminho do zip atualizado com sucesso. ID: {VideoId}", video.Id);
+
+            logger.LogInformation("Alterando o status do vídeo para 'Processado'. ID: {VideoId}", video.Id);
             await videoRepository.ChangeStatusAsync(video.Id.ToString(), VideoStatus.Processed, cancellationToken);
             logger.LogInformation("Status do vídeo alterado para 'Processado'. ID: {VideoId}", video.Id);
 
@@ -76,7 +87,9 @@ public class VideoProcessorCommandHandler(
         catch (Exception e)
         {
             logger.LogError(e, "Erro inesperado ao processar o vídeo com ID: {VideoId}", request.VideoId);
-            await videoRepository.ChangeStatusAsync(request.VideoId, VideoStatus.Failed, cancellationToken);
+            await videoRepository.ChangeStatusAsync(request.VideoId, VideoStatus.Uploaded, cancellationToken);
+            await mediator.Publish(new DeleteVideoProcessingLocalFolderNotification(request.VideoId),
+                cancellationToken);
             return Result.Failure(Error.Failure("VideoProcessorCommandHandler.Handle",
                 $"Erro ao processar o vídeo com ID {request.VideoId}: {e.Message}"));
         }

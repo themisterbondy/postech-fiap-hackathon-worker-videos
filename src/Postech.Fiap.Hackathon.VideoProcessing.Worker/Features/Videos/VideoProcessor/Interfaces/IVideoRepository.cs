@@ -6,4 +6,5 @@ public interface IVideoRepository
 {
     Task<Video?> GetVideoByIDAsync(string videoId, CancellationToken cancellationToken);
     Task ChangeStatusAsync(string videoId, VideoStatus status, CancellationToken cancellationToken);
+    Task UpdateZipPathAsync(string videoId, string zipPath, CancellationToken cancellationToken);
 }
