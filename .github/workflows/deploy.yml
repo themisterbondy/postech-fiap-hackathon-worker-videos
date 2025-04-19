@@ -53,6 +53,15 @@ jobs:
       - name: 🔨 Compilar solução
         run: dotnet build ${{ env.SOLUTION_FILE }} --configuration Release --no-restore
 
+      - name: 📦 Instalar o FFmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      - name: 🧐 Verificar vídeo de teste no output
+        run: |
+          find . -type f -name "test_video.mp4"
+
       - name: 🧪 Rodar testes
         run: |
           dotnet test ${{ env.TEST_PROJECT }} --configuration Release --no-build
