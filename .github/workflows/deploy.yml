@@ -29,7 +29,7 @@ env:
   RESOURCE_GROUP: 'rg-fiap-hackathon'
   CLUSTER_NAME: 'fiap-hackathon-k8s-cluster'
   K8S_NAMESPACE: 'fiap-hackathon'
-  HELM_CHART_PATH: './charts/webapi/'
+  HELM_CHART_PATH: './charts/worker/'
 
 jobs:
   deploy:
