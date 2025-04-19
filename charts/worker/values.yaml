@@ -55,7 +55,7 @@ ingress:
 hpa:
   enabled: true
   minReplicas: 1           # Mantém 1 réplica mínima
-  maxReplicas: 2           # Limita a 2 réplicas
+  maxReplicas: 5           # Limita a 2 réplicas
   cpuUtilization: 60       # Escala ao atingir 60% de uso de CPU
   memoryUtilization: 70    # Escala ao atingir 70% de uso de memória
 
