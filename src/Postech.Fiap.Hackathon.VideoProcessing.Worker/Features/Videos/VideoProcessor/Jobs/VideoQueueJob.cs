@@ -16,7 +16,7 @@ public class VideoQueueJob(
     {
         try
         {
-            var message = await queue.GetMessageAsync(context.CancellationToken);
+            var message = await queue.GetMessageAsync(TimeSpan.FromMinutes(5), null, null, CancellationToken.None);
 
             if (message != null)
             {

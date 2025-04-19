@@ -1,4 +1,10 @@
 ﻿FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
+
+# ⚠️ Instala ffmpeg e ffprobe
+RUN apt-get update && \
+    apt-get install -y ffmpeg && \
+    apt-get clean
+
 USER $APP_UID
 WORKDIR /app
 EXPOSE 8080
