@@ -52,20 +52,20 @@ ingress:
           pathType: Prefix
   tls: []  # Sem TLS
 
-resources:
-  limits:
-    cpu: "50m"
-    memory: "128Mi"
-  requests:
-    cpu: "50m"
-    memory: "128Mi"
-
-autoscaling:
+hpa:
   enabled: true
-  minReplicas: 2
-  maxReplicas: 10
-  targetCPUUtilizationPercentage: 50
-  targetMemoryUtilizationPercentage: 80
+  minReplicas: 1           # Mantém 1 réplica mínima
+  maxReplicas: 2           # Limita a 2 réplicas
+  cpuUtilization: 60       # Escala ao atingir 60% de uso de CPU
+  memoryUtilization: 70    # Escala ao atingir 70% de uso de memória
+
+resources:
+  requests:
+    cpu: "200m"            # Reserva 0.2 vCPU
+    memory: "512Mi"        # Reserva 256 MB de memória
+  limits:
+    cpu: "500m"            # Limita a 0.5 vCPU
+    memory: "1G"        # Limita a 512 MB de memória
 
 nodeSelector: {}
 

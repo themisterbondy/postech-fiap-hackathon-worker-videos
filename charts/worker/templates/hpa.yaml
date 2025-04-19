@@ -1,32 +1,55 @@
-{{- if .Values.autoscaling.enabled }}
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
+{{- if .Values.hpa.enabled }}  # Verifica se o HPA está ativado nas configurações do Helm.
+apiVersion: autoscaling/v2     # Versão da API para HPA com suporte a métricas avançadas.
+kind: HorizontalPodAutoscaler  # Tipo de recurso: Autoscaler Horizontal.
 metadata:
   name: {{ include "fiap-hackathon-worker.fullname" . }}
+  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "fiap-hackathon-worker.labels" . | nindent 4 }}
+
 spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: {{ include "fiap-hackathon-worker.fullname" . }}
-  minReplicas: {{ .Values.autoscaling.minReplicas }}
-  maxReplicas: {{ .Values.autoscaling.maxReplicas }}
+  minReplicas: {{ .Values.hpa.minReplicas | default 1 }}  # Número mínimo de réplicas (redundância mínima).
+  maxReplicas: {{ .Values.hpa.maxReplicas | default 2 }}  # Número máximo de réplicas (capacidade de escala).
+
+  # 🔎 Definição das métricas que irão disparar o escalonamento
   metrics:
-    {{- if .Values.autoscaling.targetCPUUtilizationPercentage }}
+    # 📈 Escala baseada na utilização da CPU
     - type: Resource
       resource:
         name: cpu
         target:
-          type: Utilization
-          averageUtilization: {{ .Values.autoscaling.targetCPUUtilizationPercentage }}
-    {{- end }}
-    {{- if .Values.autoscaling.targetMemoryUtilizationPercentage }}
+          type: Utilization                  # Tipo de alvo: Utilização em porcentagem.
+          averageUtilization: {{ .Values.hpa.cpuUtilization | default 60 }}  # Escala quando o uso médio de CPU passa de 60%.
+
+    # 📈 Escala baseada na utilização de memória
     - type: Resource
       resource:
         name: memory
         target:
-          type: Utilization
-          averageUtilization: {{ .Values.autoscaling.targetMemoryUtilizationPercentage }}
-    {{- end }}
-{{- end }}
+          type: Utilization                  # Tipo de alvo: Utilização em porcentagem.
+          averageUtilization: {{ .Values.hpa.memoryUtilization | default 70 }}  # Escala quando o uso médio de memória passa de 70%.
+
+  # ⚙️ Definição do comportamento de escalonamento
+  behavior:
+    # 📈 Configuração para escalar para cima (mais réplicas)
+    scaleUp:
+      stabilizationWindowSeconds: 30  # Tempo de espera de 30 segundos antes de escalar.
+      policies:
+        - type: Percent               # Escalona com base em percentual.
+          value: 75                   # Aumenta até 75% das réplicas existentes.
+          periodSeconds: 15           # Verifica a cada 15 segundos.
+
+    # 📉 Configuração para escalar para baixo (menos réplicas)
+    scaleDown:
+      stabilizationWindowSeconds: 30  # Tempo de espera de 30 segundos antes de reduzir.
+      policies:
+        - type: Percent                # Reduz com base em percentual.
+          value: 75                    # Diminui até 75% das réplicas.
+          periodSeconds: 15           # Verifica a cada 15 segundos.
+
+  # 🔗 Referência ao Deployment que será escalado
+  scaleTargetRef:
+    apiVersion: apps/v1                # Versão da API do Deployment.
+    kind: Deployment                   # Tipo de recurso: Deployment.
+    name: {{ include "fiap-hackathon-worker.fullname" . }}
+{{- end}}
