@@ -22,6 +22,8 @@ public class VideoFrameExtractorTests
         var videoId = Guid.NewGuid();
         var videoPath = Path.Combine(AppContext.BaseDirectory, "TestAssets", "test_video.mp4");
         File.Exists(videoPath).Should().BeTrue("o vídeo de teste precisa estar presente");
+        Console.WriteLine($"[DEBUG] Looking for video at: {videoPath}");
+        Console.WriteLine($"[DEBUG] File exists: {File.Exists(videoPath)}");
 
         var expectedOutputDir = Path.Combine(Path.GetTempPath(), videoId.ToString(), $"frames_{videoId}");
         var expectedZipPath = $"{expectedOutputDir}.zip";
