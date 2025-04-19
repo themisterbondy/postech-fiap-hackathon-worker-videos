@@ -1,0 +1,104 @@
+name: Deploy Pipeline with Docker and Kubernetes
+
+on:
+  push:
+    branches:
+      - 'feature/**'
+      - 'develop'
+      - 'main'
+  workflow_dispatch:
+
+permissions:
+  packages: write
+  contents: read
+  id-token: write
+
+env:
+  # Configurações do Projeto
+  SOLUTION_FILE: 'Postech.Fiap.Hackathon.VideoProcessing.Worker.sln'
+  TEST_PROJECT: 'tests/Postech.Fiap.Hackathon.VideoProcessing.Worker.UnitsTests'
+  DOCKERFILE_PATH: 'src/Postech.Fiap.Hackathon.VideoProcessing.Worker/Dockerfile'
+  DOCKER_IMAGE_NAME: 'fiap-hackathon-worker'
+  COVERAGE_FILE: 'coverage.xml'
+
+  # Configurações do Docker
+  DOCKER_REGISTRY: 'themisterbondy'
+  DOCKER_IMAGE_TAG: '${{ github.sha }}'
+
+  # Configurações do Kubernetes
+  RESOURCE_GROUP: 'rg-fiap-hackathon'
+  CLUSTER_NAME: 'fiap-hackathon-k8s-cluster'
+  K8S_NAMESPACE: 'fiap-hackathon'
+  HELM_CHART_PATH: './charts/webapi/'
+
+jobs:
+  deploy:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🛎️ Checkout código
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔧 Instalar .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: 🚀 Restaurar dependências
+        run: dotnet restore ${{ env.SOLUTION_FILE }}
+
+      - name: 🔨 Compilar solução
+        run: dotnet build ${{ env.SOLUTION_FILE }} --configuration Release --no-restore
+
+      - name: 🧪 Rodar testes
+        run: |
+          dotnet test ${{ env.TEST_PROJECT }} --configuration Release --no-build
+
+      - name: 🏷️ Definir tag da imagem Docker (SHA curto)
+        id: docker_tag
+        run: |
+          SHORT_SHA=$(echo "${GITHUB_SHA}" | cut -c1-7)
+          echo "DOCKER_IMAGE_TAG=${SHORT_SHA}" >> $GITHUB_ENV
+
+      - name: 🐳 Login no Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: 🏗️ Build e Push da Imagem Docker
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: ${{ env.DOCKERFILE_PATH }}
+          push: true
+          tags: |
+            ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_IMAGE_TAG }}
+            ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:latest
+          labels: |
+            org.opencontainers.image.source=${{ github.repository }}
+
+      - name: 🔐 Autenticar com o Azure
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: 📥 Obter Configuração do Kubernetes
+        run: |
+          az aks get-credentials --resource-group ${{ env.RESOURCE_GROUP }} --name ${{ env.CLUSTER_NAME }} --overwrite-existing
+
+      - name: 📦 Instalar o Helm
+        uses: azure/setup-helm@v3
+
+      - name: 🚀 Deploy da API no Kubernetes
+        run: |
+          helm upgrade --install ${{ env.DOCKER_IMAGE_NAME }} ${{ env.HELM_CHART_PATH }} \
+            --namespace ${{ env.K8S_NAMESPACE }} \
+            --set image.repository=${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }} \
+            --set image.tag=${{ env.DOCKER_IMAGE_TAG }} \
+            --create-namespace
