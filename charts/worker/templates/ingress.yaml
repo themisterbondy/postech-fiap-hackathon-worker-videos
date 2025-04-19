@@ -27,7 +27,7 @@ metadata:
 spec:
   ingressClassName: {{ .Values.ingress.className | default "nginx" }}
   rules:
-    - host: "myfood-products.com.br"
+    - host: fiap-hackathon-worker.com.br
       http:
         paths:
           - path: /

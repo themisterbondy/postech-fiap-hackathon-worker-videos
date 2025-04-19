@@ -26,7 +26,6 @@ public static class HealthChecks
                 queueName: configuration["Azure:Queue:Name"] ?? string.Empty,
                 tags: ["Azure", "Queue"]);
 
-
         return services;
     }
 
