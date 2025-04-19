@@ -60,7 +60,7 @@ public class StorageService(CloudBlobContainer container) : IStorageService
             await using var fileStream = File.OpenRead(filePath);
             await blob.UploadFromStreamAsync(fileStream, cancellationToken);
 
-            return Result.Success(blob.Uri.ToString());
+            return Result.Success(blobName);
         }
         catch (RequestFailedException ex)
         {
