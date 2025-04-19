@@ -102,12 +102,15 @@ public class StorageServiceTests
             .UploadFromStreamAsync(Arg.Any<Stream>(), _cancellationToken)
             .Returns(Task.CompletedTask);
 
+        var videoId = Guid.NewGuid();
+        var fileName = Path.GetFileName(filePath);
+
         // Act
-        var result = await _sut.UploadAsync(Guid.NewGuid(), filePath, "video/mp4", _cancellationToken);
+        var result = await _sut.UploadAsync(videoId, filePath, "video/mp4", _cancellationToken);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Contain("https://");
+        result.Value.Should().Contain($"{videoId}/{fileName}");
     }
 
     [Fact]

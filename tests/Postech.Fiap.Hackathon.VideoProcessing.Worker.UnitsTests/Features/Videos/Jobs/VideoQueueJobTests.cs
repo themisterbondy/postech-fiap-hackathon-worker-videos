@@ -35,7 +35,7 @@ public class VideoQueueJobTests
     {
         // Arrange
         var message = CreateMessage();
-        _queue.GetMessageAsync(Arg.Any<CancellationToken>()).Returns(message);
+        _queue.GetMessageAsync(TimeSpan.FromMinutes(5), null, null, CancellationToken.None).Returns(message);
         _receiver.ReceiverAsync(message).Returns(Result.Success());
 
         var sut = CreateSut();
@@ -49,6 +49,12 @@ public class VideoQueueJobTests
         await _mediator.Received(1).Publish(
             Arg.Is<DeleteVideoProcessingLocalFolderNotification>(n => n.VideoId == message.AsString),
             Arg.Any<CancellationToken>());
+        _logger.Received().Log(
+            LogLevel.Information,
+            Arg.Any<EventId>(),
+            Arg.Is<object>(v => v.ToString()!.Contains("Mensagem processada e removida da fila com sucesso")),
+            null,
+            Arg.Any<Func<object, Exception, string>>());
     }
 
     [Fact]
@@ -56,9 +62,8 @@ public class VideoQueueJobTests
     {
         // Arrange
         var message = CreateMessage(dequeueCount: 5);
-        _queue.GetMessageAsync(Arg.Any<CancellationToken>()).Returns(message);
-        _receiver.ReceiverAsync(message)
-            .Returns(Result.Failure(Error.Failure("Processor", "Falha final")));
+        _queue.GetMessageAsync(TimeSpan.FromMinutes(5), null, null, CancellationToken.None).Returns(message);
+        _receiver.ReceiverAsync(message).Returns(Result.Failure(Error.Failure("Processor", "Falha final")));
 
         var sut = CreateSut();
 
@@ -68,16 +73,47 @@ public class VideoQueueJobTests
         // Assert
         await _queue.Received(1).DeleteMessageAsync(message);
         await _mediator.Received(1).Publish(
-            Arg.Is<VideoProcessingFailedNotification>(n => n.VideoId == message.AsString),
+            Arg.Is<VideoProcessingFailedNotification>(n =>
+                n.VideoId == message.AsString),
             Arg.Any<CancellationToken>());
+        _logger.Received().Log(
+            LogLevel.Error,
+            Arg.Any<EventId>(),
+            Arg.Is<object>(v => v.ToString()!.Contains("Mensagem falhou após 5 tentativas")),
+            null,
+            Arg.Any<Func<object, Exception, string>>());
+    }
+
+    [Fact]
+    public async Task Execute_ShouldLogWarning_WhenProcessingFails_ButRetryCountLessThan5()
+    {
+        // Arrange
+        var message = CreateMessage(dequeueCount: 3);
+        _queue.GetMessageAsync(TimeSpan.FromMinutes(5), null, null, CancellationToken.None).Returns(message);
+        _receiver.ReceiverAsync(message).Returns(Result.Failure(Error.Failure("Processor", "Falha parcial")));
+
+        var sut = CreateSut();
+
+        // Act
+        await sut.Execute(_jobContext);
+
+        // Assert
+        await _queue.DidNotReceive().DeleteMessageAsync(message);
+        await _mediator.DidNotReceive().Publish(Arg.Any<VideoProcessingFailedNotification>());
+        _logger.Received().Log(
+            LogLevel.Warning,
+            Arg.Any<EventId>(),
+            Arg.Is<object>(v => v.ToString()!.Contains("Mensagem falhou. Tentativa 3 de 5")),
+            null,
+            Arg.Any<Func<object, Exception, string>>());
     }
 
     [Fact]
     public async Task Execute_ShouldLogError_WhenExceptionIsThrown()
     {
         // Arrange
-        _queue.GetMessageAsync(Arg.Any<CancellationToken>())
-            .Returns(_ => Task.FromException<CloudQueueMessage>(new Exception("queue falhou")));
+        _queue.GetMessageAsync(TimeSpan.FromMinutes(5), null, null, CancellationToken.None)
+            .Returns(Task.FromException<CloudQueueMessage>(new Exception("queue falhou")));
 
         var sut = CreateSut();
 
@@ -91,5 +127,23 @@ public class VideoQueueJobTests
             Arg.Is<object>(msg => msg.ToString()!.Contains("Erro ao processar mensagem da fila")),
             Arg.Any<Exception>(),
             Arg.Any<Func<object, Exception?, string>>());
+    }
+
+    [Fact]
+    public async Task Execute_ShouldDoNothing_WhenNoMessageIsReturned()
+    {
+        // Arrange
+        _queue.GetMessageAsync(TimeSpan.FromMinutes(5), null, null, CancellationToken.None)
+            .Returns((CloudQueueMessage?)null);
+
+        var sut = CreateSut();
+
+        // Act
+        await sut.Execute(_jobContext);
+
+        // Assert
+        await _receiver.DidNotReceive().ReceiverAsync(Arg.Any<CloudQueueMessage>());
+        await _queue.DidNotReceive().DeleteMessageAsync(Arg.Any<CloudQueueMessage>());
+        await _mediator.DidNotReceive().Publish(Arg.Any<object>(), Arg.Any<CancellationToken>());
     }
 }
