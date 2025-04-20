@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{5AC062BD-5A70-4B43-B1A5-9119FCC6160B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Postech.Fiap.Hackathon.VideoProcessing.Worker", "src\Postech.Fiap.Hackathon.VideoProcessing.Worker\Postech.Fiap.Hackathon.VideoProcessing.Worker.csproj", "{1D23D9F7-B5D3-402A-B953-3B65F4EC036B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{C5C1F7B1-434C-436A-A88D-285F0B392B05}"
+	ProjectSection(SolutionItems) = preProject
+		compose.yaml = compose.yaml
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1D23D9F7-B5D3-402A-B953-3B65F4EC036B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1D23D9F7-B5D3-402A-B953-3B65F4EC036B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1D23D9F7-B5D3-402A-B953-3B65F4EC036B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1D23D9F7-B5D3-402A-B953-3B65F4EC036B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{1D23D9F7-B5D3-402A-B953-3B65F4EC036B} = {5AC062BD-5A70-4B43-B1A5-9119FCC6160B}
+	EndGlobalSection
+EndGlobal
