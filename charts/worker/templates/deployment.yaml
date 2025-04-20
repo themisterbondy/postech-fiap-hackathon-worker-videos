@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "fiap-hackathon-worker.fullname" . }}
+  labels:
+    {{- include "fiap-hackathon-worker.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "fiap-hackathon-worker.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "fiap-hackathon-worker.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                configMapKeyRef:
+                  name: fiap-hackathon-config
+                  key: ConnectionStrings__DefaultConnection
+            - name: Azure__ConnectionString
+              valueFrom:
+                configMapKeyRef:
+                  name: fiap-hackathon-config
+                  key: Azure__ConnectionString
+            - name: Azure__AccountName
+              valueFrom:
+                configMapKeyRef:
+                  name: fiap-hackathon-config
+                  key: Azure__AccountName
+            - name: Azure__AccountKey
+              valueFrom:
+                configMapKeyRef:
+                  name: fiap-hackathon-config
+                  key: Azure__AccountKey
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 60
+            timeoutSeconds: 60
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 60
+            timeoutSeconds: 60
+          resources:
+          {{- toYaml .Values.resources | nindent 12 }}

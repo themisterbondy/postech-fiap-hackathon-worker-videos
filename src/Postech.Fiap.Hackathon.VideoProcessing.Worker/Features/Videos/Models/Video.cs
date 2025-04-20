@@ -7,7 +7,7 @@ public class Video
     public string FileName { get; set; } = string.Empty;
     public string FilePath { get; set; } = string.Empty;
     public int ThumbnailsInterval { get; set; }
-    public string ThumbnailsZipPath { get; set; } = string.Empty;
+    public string? ThumbnailsZipPath { get; set; } = string.Empty;
     public VideoStatus Status { get; set; }
     public DateTime CreatedAt { get; set; }
 }

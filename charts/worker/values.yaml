@@ -1,0 +1,74 @@
+# Default values for fiap-hackathon-worker.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: themisterbondy/fiap-hackathon-worker
+  pullPolicy: Always
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+# fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+# runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+  hosts:
+    - host: fiap-hackathon-worker.com.br
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []  # Sem TLS
+
+hpa:
+  enabled: true
+  minReplicas: 1           # Mantém 1 réplica mínima
+  maxReplicas: 5           # Limita a 2 réplicas
+  cpuUtilization: 60       # Escala ao atingir 60% de uso de CPU
+  memoryUtilization: 70    # Escala ao atingir 70% de uso de memória
+
+resources:
+  requests:
+    cpu: "200m"            # Reserva 0.2 vCPU
+    memory: "512Mi"        # Reserva 256 MB de memória
+  limits:
+    cpu: "500m"            # Limita a 0.5 vCPU
+    memory: "1G"        # Limita a 512 MB de memória
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

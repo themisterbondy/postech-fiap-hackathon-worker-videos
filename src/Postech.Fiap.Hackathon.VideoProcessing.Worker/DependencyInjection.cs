@@ -3,10 +3,15 @@ using Microsoft.Azure.Storage;
 using Microsoft.Azure.Storage.Blob;
 using Microsoft.Azure.Storage.Queue;
 using Microsoft.EntityFrameworkCore;
-using Postech.Fiap.Hackathon.VideoProcessing.Worker.Features.Videos.Interfaces;
-using Postech.Fiap.Hackathon.VideoProcessing.Worker.Features.Videos.Services;
-using Postech.Fiap.Hackathon.VideoProcessing.Worker.Features.Videos.Worker;
+using Postech.Fiap.Hackathon.VideoProcessing.Worker.Common.Behavior;
+using Postech.Fiap.Hackathon.VideoProcessing.Worker.Features.Videos.VideoProcessor.Interfaces;
+using Postech.Fiap.Hackathon.VideoProcessing.Worker.Features.Videos.VideoProcessor.Jobs;
+using Postech.Fiap.Hackathon.VideoProcessing.Worker.Features.Videos.VideoProcessor.Repositores;
+using Postech.Fiap.Hackathon.VideoProcessing.Worker.Features.Videos.VideoProcessor.Services;
+using Postech.Fiap.Hackathon.VideoProcessing.Worker.Infrastructure.Email;
 using Postech.Fiap.Hackathon.VideoProcessing.Worker.Persistence;
+using Postech.Fiap.Hackathon.VideoProcessing.Worker.Settings;
+using Postech.Fiap.Orders.WebApi.Common;
 using Quartz;
 using Serilog;
 using Serilog.Events;
@@ -15,18 +20,21 @@ using Serilog.Filters;
 
 namespace Postech.Fiap.Hackathon.VideoProcessing.Worker;
 
+[ExcludeFromCodeCoverage]
 public static class DependencyInjection
 {
     private static readonly Assembly Assembly = typeof(Program).Assembly;
 
     public static IServiceCollection AddWorker(this IServiceCollection services, IConfiguration configuration)
     {
-        var sqlServerConnectionString = configuration.GetConnectionString("DefaultConnection");
+        services.AddMediatRConfiguration();
+        var sqlServerConnectionString = configuration["ConnectionStrings:DefaultConnection"];
 
-        services.AddDbContext<ApplicationDbContext>(options =>
+        services.AddDbContextFactory<ApplicationDbContext>(options =>
         {
             options.UseSqlServer(sqlServerConnectionString,
-                options => { options.EnableRetryOnFailure(2, TimeSpan.FromSeconds(3), new List<int>()); });
+                options => { options.EnableRetryOnFailure(2, TimeSpan.FromSeconds(20), new List<int>()); });
+            options.EnableSensitiveDataLogging(false);
         });
 
         services.AddSingleton<CloudBlobContainer>(sp =>
@@ -68,15 +76,29 @@ public static class DependencyInjection
             q.AddTrigger(opts => opts
                 .ForJob(jobKey)
                 .WithIdentity("VideoQueueTrigger")
-                .WithSimpleSchedule(x => x.WithIntervalInSeconds(5).RepeatForever()));
+                .WithSimpleSchedule(x => x.WithIntervalInSeconds(30).RepeatForever()));
         });
 
+        services.AddUseHealthChecksConfiguration(configuration);
         services.AddQuartzHostedService();
 
-        services.AddSingleton<IMessageProcessor, VideoMessageProcessor>();
+        services.AddScoped<IMessageReceiver, VideoMessageReceiver>();
+        services.AddScoped<IStorageService, StorageService>();
+        services.AddScoped<IVideoRepository, VideoRepository>();
+        services.AddScoped<IVideoFrameExtractor, VideoFrameExtractor>();
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IEmailSender, SmtpEmailSender>();
+
+        services.Configure<SmtpSettings>(configuration.GetSection("SmtpSettings"));
 
 
         return services;
+    }
+
+    private static void AddMediatRConfiguration(this IServiceCollection services)
+    {
+        services.AddMediatR(config => config.RegisterServicesFromAssembly(Assembly));
+        services.AddScoped(typeof(IPipelineBehavior<,>), typeof(LoggingPipelineBehavior<,>));
     }
 
     public static void AddSerilogConfiguration(this IServiceCollection services,
@@ -90,6 +112,7 @@ public static class DependencyInjection
             .ReadFrom.Configuration(configuration)
             .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
             .MinimumLevel.Override("System", LogEventLevel.Information)
+            .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", LogEventLevel.Warning)
             .Enrich.FromLogContext()
             .Enrich.WithProperty("ApplicationName", applicationName)
             .Enrich.WithCorrelationId()

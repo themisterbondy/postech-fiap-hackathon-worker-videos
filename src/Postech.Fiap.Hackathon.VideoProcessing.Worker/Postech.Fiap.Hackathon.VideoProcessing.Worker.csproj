@@ -6,12 +6,20 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
         <RootNamespace>Postech.Fiap.Hackathon.VideoProcessing.Worker</RootNamespace>
+        <UserSecretsId>595ee78c-789b-4a59-bbe2-1421481d5f12</UserSecretsId>
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="AspNetCore.HealthChecks.AzureStorage" Version="7.0.0"/>
+        <PackageReference Include="AspNetCore.HealthChecks.SqlServer" Version="9.0.0"/>
+        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.3"/>
+        <PackageReference Include="FFMpegCore" Version="5.2.0"/>
+        <PackageReference Include="MailKit" Version="4.11.0"/>
+        <PackageReference Include="MediatR" Version="12.5.0"/>
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.3"/>
         <PackageReference Include="Microsoft.Azure.Storage.Blob" Version="11.2.3"/>
         <PackageReference Include="Microsoft.Azure.Storage.Queue" Version="11.2.3"/>
+        <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="9.0.4"/>
         <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.3"/>
         <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.3"/>
         <PackageReference Include="Quartz.AspNetCore" Version="3.14.0"/>
