@@ -12,6 +12,13 @@ public class SmtpEmailSender(IOptions<SmtpSettings> options) : IEmailSender
 
     public async Task SendAsync(string to, string subject, string body, CancellationToken cancellationToken)
     {
+        if (string.IsNullOrWhiteSpace(to))
+            throw new ArgumentException("O endereço de e-mail do destinatário não pode ser nulo ou vazio.", nameof(to));
+
+        if (string.IsNullOrWhiteSpace(_settings.From))
+            throw new ArgumentException("O endereço de e-mail do remetente não pode ser nulo ou vazio.",
+                nameof(_settings.From));
+
         var message = new MailMessage
         {
             From = new MailAddress(_settings.From),
