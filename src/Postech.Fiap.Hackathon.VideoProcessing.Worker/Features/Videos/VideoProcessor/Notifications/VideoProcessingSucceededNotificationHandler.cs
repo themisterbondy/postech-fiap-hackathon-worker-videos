@@ -22,10 +22,10 @@ public class VideoProcessingSucceededNotificationHandler(
             await emailSender.SendAsync(
                 userEmail,
                 "[SUCESSO] Vídeo processado com êxito",
-                """
-                O vídeo foi processado com sucesso! ID do vídeo: {videoId}. 
-                As imagens geradas estão disponíveis para download.
-                """,
+                $"""
+                 O vídeo foi processado com sucesso! ID do vídeo: {videoId}. 
+                 As imagens geradas estão disponíveis para download.
+                 """,
                 cancellationToken);
 
             logger.LogInformation("E-mail de sucesso enviado com sucesso.");

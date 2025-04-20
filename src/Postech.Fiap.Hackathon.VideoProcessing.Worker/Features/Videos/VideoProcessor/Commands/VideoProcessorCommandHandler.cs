@@ -82,11 +82,11 @@ public class VideoProcessorCommandHandler(
             await videoRepository.ChangeStatusAsync(video.Id.ToString(), VideoStatus.Processed, cancellationToken);
             logger.LogInformation("Status do vídeo alterado para 'Processado'. ID: {VideoId}", video.Id);
 
-            logger.LogInformation("Publicando notificação de sucesso do processamento do vídeo. ID: {VideoId}",
-                video.Id);
-            await mediator.Publish(new VideoProcessingSucceededNotification(video.Id), cancellationToken);
-            logger.LogInformation(
-                "Notificação de sucesso do processamento do vídeo publicada com sucesso. ID: {VideoId}", video.Id);
+            // logger.LogInformation("Publicando notificação de sucesso do processamento do vídeo. ID: {VideoId}",
+            //     video.Id);
+            // await mediator.Publish(new VideoProcessingSucceededNotification(video.Id), cancellationToken);
+            // logger.LogInformation(
+            //     "Notificação de sucesso do processamento do vídeo publicada com sucesso. ID: {VideoId}", video.Id);
 
             return Result.Success();
         }
