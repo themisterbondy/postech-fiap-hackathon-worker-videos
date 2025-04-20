@@ -31,6 +31,36 @@ spec:
                 configMapKeyRef:
                   name: fiap-hackathon-config
                   key: Azure__ConnectionString
+            - name: SmtpSettings__Host
+              valueFrom:
+                configMapKeyRef:
+                  name: fiap-hackathon-config
+                  key: SmtpSettings__Host
+            - name: SmtpSettings__Port
+              valueFrom:
+                configMapKeyRef:
+                  name: fiap-hackathon-config
+                  key: SmtpSettings__Port
+            - name: SmtpSettings__EnableSsl
+              valueFrom:
+                configMapKeyRef:
+                  name: fiap-hackathon-config
+                  key: SmtpSettings__EnableSsl
+            - name: SmtpSettings__From
+              valueFrom:
+                configMapKeyRef:
+                  name: fiap-hackathon-config
+                  key: SmtpSettings__From
+            - name: SmtpSettings__Username
+              valueFrom:
+                configMapKeyRef:
+                  name: fiap-hackathon-config
+                  key: SmtpSettings__Username
+            - name: SmtpSettings__Password
+              valueFrom:
+                configMapKeyRef:
+                  name: fiap-hackathon-config
+                  key: SmtpSettings__Password
             - name: Azure__AccountName
               valueFrom:
                 configMapKeyRef:

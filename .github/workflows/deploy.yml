@@ -1,11 +1,6 @@
 name: Deploy Pipeline with Docker and Kubernetes
 
 on:
-  push:
-    branches:
-      - 'feature/**'
-      - 'develop'
-      - 'main'
   pull_request:
     branches:
       - main
