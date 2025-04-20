@@ -6,6 +6,10 @@ on:
       - 'feature/**'
       - 'develop'
       - 'main'
+  pull_request:
+    branches:
+      - main
+    types: [closed]
   workflow_dispatch:
 
 permissions:
