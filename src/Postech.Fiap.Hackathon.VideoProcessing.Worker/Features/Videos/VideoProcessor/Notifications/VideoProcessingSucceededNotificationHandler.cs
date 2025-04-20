@@ -17,6 +17,12 @@ public class VideoProcessingSucceededNotificationHandler(
 
         var userEmail = await userRepository.GetUserEmailByVideoId(videoId);
 
+        if (string.IsNullOrWhiteSpace(userEmail))
+        {
+            logger.LogWarning("E-mail do usuário não encontrado para VideoId {VideoId}", notification.VideoId);
+            return;
+        }
+
         try
         {
             await emailSender.SendAsync(
